@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.springframework.dao.support.DaoSupport;
  * <p>
  * This class needs a SqlSessionTemplate or a SqlSessionFactory. If both are set the SqlSessionFactory will be ignored.
  * <p>
- * 
+ *
  * @author Putthiphong Boonphong
  * @author Eduardo Macarron
  *
@@ -36,6 +36,10 @@ import org.springframework.dao.support.DaoSupport;
  * @see #setSqlSessionTemplate
  * @see SqlSessionTemplate
  */
+//如果要在mapper接口中使用SqlSessionDaoSupport的话，就会在实现类中给mapper创建一个实现类
+//实现类首先实现mpper接口，然后继承sqlSessionDaoSuport，然后通过getSqlSession方法获得sqlSessionDaoSuport
+//但是这样做的话，每一次继承sqlSessionDaoSuport之后，还要对sqlSessionTemplate进行一次封装，所以为了解决这个问题
+//  干脆创建一个baseDao直接继承SqlSessionDaoSupport，然后通过mapper接口的实现类继承baseDao
 public abstract class SqlSessionDaoSupport extends DaoSupport {
 
   private SqlSessionTemplate sqlSessionTemplate;
@@ -59,7 +63,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
    * <p>
    * Can be overridden in subclasses to provide a SqlSessionTemplate instance with different configuration, or a custom
    * SqlSessionTemplate subclass.
-   * 
+   *
    * @param sqlSessionFactory
    *          the MyBatis SqlSessionFactory to create a SqlSessionTemplate for
    * @return the new SqlSessionTemplate instance

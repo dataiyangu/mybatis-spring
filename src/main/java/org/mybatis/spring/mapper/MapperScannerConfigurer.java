@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,8 @@ import org.springframework.util.StringUtils;
  * @see ClassPathMapperScanner
  */
 public class MapperScannerConfigurer
+    //BeanDefinitionRegistryPostProcessor里面有个方法postProcessBeanDefinitionRegistry
+    //又回到了spring中，就是在bean注入到容器中的时候能够去做一些事情，比如修改BeanDefinition的定义
     implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware, BeanNameAware {
 
   private String basePackage;
@@ -191,7 +193,7 @@ public class MapperScannerConfigurer
    * Specifies which {@code SqlSessionTemplate} to use in the case that there is more than one in the spring context.
    * Usually this is only needed when you have more than one datasource.
    * <p>
-   * 
+   *
    * @deprecated Use {@link #setSqlSessionTemplateBeanName(String)} instead
    *
    * @param sqlSessionTemplate
@@ -222,7 +224,7 @@ public class MapperScannerConfigurer
    * Specifies which {@code SqlSessionFactory} to use in the case that there is more than one in the spring context.
    * Usually this is only needed when you have more than one datasource.
    * <p>
-   * 
+   *
    * @deprecated Use {@link #setSqlSessionFactoryBeanName(String)} instead.
    *
    * @param sqlSessionFactory
@@ -253,7 +255,7 @@ public class MapperScannerConfigurer
    * Specifies a flag that whether execute a property placeholder processing or not.
    * <p>
    * The default is {@literal false}. This means that a property placeholder processing does not execute.
-   * 
+   *
    * @since 1.1.1
    *
    * @param processPropertyPlaceHolders
@@ -329,10 +331,11 @@ public class MapperScannerConfigurer
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @since 1.0.2
    */
   @Override
+  //重写了这个方法，他究竟做了什么呢？
   public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
     if (this.processPropertyPlaceHolders) {
       processPropertyPlaceHolders();
@@ -353,6 +356,8 @@ public class MapperScannerConfigurer
       scanner.setLazyInitialization(Boolean.valueOf(lazyInitialization));
     }
     scanner.registerFilters();
+    //这个是只读的，里面调用了doScan方法，这个真是的是调用的子类的这个方法。
+    //真是的是调用的ClassPathMapperSanner的doScan方法
     scanner.scan(
         StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
   }

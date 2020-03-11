@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,10 @@ import org.springframework.beans.factory.FactoryBean;
  *
  * @see SqlSessionTemplate
  */
+//我们直接进入MapperFactoryBean
+//  为什么继承SqlSessionDaoSupport？
+//  这就知道了之前的想要用sqlsessionTemplate，但是又不想创建实现类怎么办？
+// 通过AUtowired注入MapperFactoryBean,MapperFactoryBean实现了SqlSessionDaoSupport,这里面包括这sqlsessionTemplate
 public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements FactoryBean<T> {
 
   private Class<T> mapperInterface;
@@ -92,6 +96,7 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
    */
   @Override
   public T getObject() throws Exception {
+    //进入sqlsessionTemplate的getMapper方法
     return getSqlSession().getMapper(this.mapperInterface);
   }
 

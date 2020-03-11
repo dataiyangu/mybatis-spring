@@ -85,6 +85,9 @@ import static org.springframework.util.StringUtils.tokenizeToStringArray;
  * @see #setConfigLocation
  * @see #setDataSource
  */
+/* 从这里开始看，因为spring把 SqlSessionFactoryBean实例化了*/
+/* InitializingBean afterPropertiesSet()方法：ioc容器中对象实例化完成，设置属性完成之后可以做的一些操作*/
+/*进入FactoryBean看看  getObject()方法：从IOC中拿到对象的时候，就会调用它*/
 public class SqlSessionFactoryBean
     implements FactoryBean<SqlSessionFactory>, InitializingBean, ApplicationListener<ApplicationEvent> {
 
@@ -487,7 +490,7 @@ public class SqlSessionFactoryBean
    *           if configuration is failed
    */
   protected SqlSessionFactory buildSqlSessionFactory() throws Exception {
-
+    //targetConfiguration是用来设置属性的所以名字叫做 target。。。
     final Configuration targetConfiguration;
 
     XMLConfigBuilder xmlConfigBuilder = null;
@@ -590,6 +593,9 @@ public class SqlSessionFactoryBean
           try {
             XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(mapperLocation.getInputStream(),
                 targetConfiguration, mapperLocation.toString(), targetConfiguration.getSqlFragments());
+            /*里面就又到了mybatis原始的代码*/
+            //也就是说在spring启动的时候，会调用getObject方法，getObject方法把解析配置文件，创建configration，设置属性
+            //等一些列的操作，都做了
             xmlMapperBuilder.parse();
           } catch (Exception e) {
             throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
@@ -602,7 +608,7 @@ public class SqlSessionFactoryBean
     } else {
       LOGGER.debug(() -> "Property 'mapperLocations' was not specified.");
     }
-
+    // 返回了DefaultSqlSessionFactory，和mybatis是一样的。
     return this.sqlSessionFactoryBuilder.build(targetConfiguration);
   }
 
@@ -610,6 +616,7 @@ public class SqlSessionFactoryBean
    * {@inheritDoc}
    */
   @Override
+  /*在SqlSessionFactoryBean的时候是怎么处理getObject的？*/
   public SqlSessionFactory getObject() throws Exception {
     if (this.sqlSessionFactory == null) {
       afterPropertiesSet();

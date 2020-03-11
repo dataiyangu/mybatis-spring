@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,13 @@ import org.springframework.dao.support.PersistenceExceptionTranslator;
  * @see SqlSessionFactory
  * @see MyBatisExceptionTranslator
  */
+//在mybaties中用的是defaultSqlSession，但是defaultSqlSession不是线程安全的，如果用它的话
+//  一定需要在多个service之间共享，一旦共享就会存在线程安全问题，
+//  spring中通过SqlSessionTemplate进行了解决,他们都实现了sqlSession,当做defaultSqlSession替代品
+
+//  问题?为什么SqlSessionTemplate是线程安全的?
+
+
 public class SqlSessionTemplate implements SqlSession, DisposableBean {
 
   private final SqlSessionFactory sqlSessionFactory;
@@ -127,7 +134,12 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
     this.sqlSessionFactory = sqlSessionFactory;
     this.executorType = executorType;
     this.exceptionTranslator = exceptionTranslator;
+    //通过jdk的静态代理获取到了sqlSessionProxy
     this.sqlSessionProxy = (SqlSession) newProxyInstance(SqlSessionFactory.class.getClassLoader(),
+        //SqlSessionInterceptor就是实现了invocationHandler接口的那个类
+        //分析一下为什么sqlSessionTemplate是线程安全的？
+        //进入代理类SqlSessionInterceptor
+
         new Class[] { SqlSession.class }, new SqlSessionInterceptor());
   }
 
@@ -212,6 +224,8 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
    */
   @Override
   public <E> List<E> selectList(String statement) {
+    //mybaties中用的是executor完成的操作，这里是sqlSessionProxy
+    //定义：  private final SqlSession sqlSessionProxy; 也是一个sqlSession
     return this.sqlSessionProxy.selectList(statement);
   }
 
@@ -308,6 +322,7 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
    */
   @Override
   public <T> T getMapper(Class<T> type) {
+    //再往里就是返回MapperProxyFactory
     return getConfiguration().getMapper(type, this);
   }
 
@@ -417,6 +432,7 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
    * unwraps exceptions thrown by {@code Method#invoke(Object, Object...)} to pass a {@code PersistenceException} to the
    * {@code PersistenceExceptionTranslator}.
    */
+  //到了这里，通过SqlSessionInterceptor代理DefaultSqlSession
   private class SqlSessionInterceptor implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -445,6 +461,7 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
         throw unwrapped;
       } finally {
         if (sqlSession != null) {
+          //每次关闭的时候都必须要close掉
           closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
         }
       }

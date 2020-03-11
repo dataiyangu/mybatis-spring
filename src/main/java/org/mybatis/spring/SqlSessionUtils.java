@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,8 @@ public final class SqlSessionUtils {
     notNull(sessionFactory, NO_SQL_SESSION_FACTORY_SPECIFIED);
     notNull(executorType, NO_EXECUTOR_TYPE_SPECIFIED);
 
+    //里面进不去了，看doGetResource方法，看到了(Map)resources.get();，resources是如何定义的
+    // resources(SqlSession的持有器)也是一个Threadlocal的对象，每一个DefaultSqlSession都是有自己的SqlSessionHolder
     SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
     SqlSession session = sessionHolder(executorType, holder);
@@ -115,7 +117,7 @@ public final class SqlSessionUtils {
    * Note: The DataSource used by the Environment should be synchronized with the transaction either through
    * DataSourceTxMgr or another tx synchronization. Further assume that if an exception is thrown, whatever started the
    * transaction will handle closing / rolling back the Connection associated with the SqlSession.
-   * 
+   *
    * @param sessionFactory
    *          sqlSessionFactory used for registration.
    * @param executorType
@@ -189,6 +191,13 @@ public final class SqlSessionUtils {
     SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
     if ((holder != null) && (holder.getSqlSession() == session)) {
       LOGGER.debug(() -> "Releasing transactional SqlSession [" + session + "]");
+      //调用SqlSessionHolder的released方法
+      //进入released方法,里面是 --this.referenceCount;  减少自己的引用次数
+
+      //为什么通过事务管理器管理呢?
+      //在同一个事务里面 ,可以使用相同的会话sqlsession,这个时候仅仅减少引用的次数,
+      //并没有真正的关闭掉。如果这个事务里面只有这一个会话的话，在close的时候，就会
+      //真正的把这个会话close掉。
       holder.released();
     } else {
       LOGGER.debug(() -> "Closing non transactional SqlSession [" + session + "]");
