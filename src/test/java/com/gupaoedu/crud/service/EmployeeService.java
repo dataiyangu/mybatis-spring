@@ -23,6 +23,8 @@ public class EmployeeService {
     //  总结一下：注册的时候，把mapper替换成了MapperFactoryBean，然后注入使用的时候，会调用MapperFactoryBean的
     //   getObject方法，在getObject方法里,调用sqlSessionTemplate(因为继承了sqlSessionDaoSupport)的getMapper方法
     //  拿到了代理对象MapperProxy,所以下面就可以走到employeeMapper.selectByMap(null);代理对象的流程了.
+
+    //  就是说注入其实返回的是一个mapperProxy
     EmployeeMapper employeeMapper;
 
     public List<Employee> getAll() {
